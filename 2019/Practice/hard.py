@@ -1,6 +1,4 @@
-REF = 1000000007
-def mod(value):
-    return value % REF
+MOD = 1000000007
 
 def read_int():
     return int(input())
@@ -11,22 +9,25 @@ def read_ints():
 def load():
     N, K, x1, y1, C, D, E1, E2, F = read_ints()
     A = get_array(N, x1, y1, C, D, E1, E2, F)   # O(N)
-    digit_sums = get_sum(A)                     # O(N)
     
-    return N, K, A, digit_sums
+    return N, K, A
     
 def solve(case):
-    N, K, A, digit_sums = case
+    N, K, A = case
     
     # POWER = SUM(POWER_i) = SUM(digit_sums[i-1] * (i^1 + i^2 + ... + i^K))
     # which can be simplified by the sum formula of equal-ratio series:
     # i^1 + ... + i^K = i*(i^K-1)/(i-1)
     
-    # O(N)
+    digit_sum = 0
     power = 0
-    for i, digit_sum in enumerate(digit_sums):
-        power += digit_sum * (i+1) * ((i+1) ** K - 1) // i if i > 0 else digit_sum * K
-        power = mod(power)
+    for i in range(N):
+        digit_sum = (digit_sum + A[N-1-i] * (i+1)) % MOD
+
+        if i == N - 1:
+            power = (power + digit_sum * K) % MOD
+        else:
+            power = (power + digit_sum * (N-i) * (pow(N-i, K, MOD) - 1) * pow(N-i-1, MOD-2, MOD)) % MOD
     
     return power
     
