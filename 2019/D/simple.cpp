@@ -23,11 +23,13 @@ vector<int> solve(int N, vector<int>& nums, int Q, vector<pair<int, int>>& modif
     vector<int> res;
     
     for (auto& m : modifications) {
+        int orig = nums[m.first];
+        nums[m.first] = m.second;
         int max_len = 0;
         for (int i = 0; i < N; ++i) {
             for (int j = i; j < N; ++j) {
                 if (m.first >= i && m.first <= j) {
-                    map[i][j] ^= nums[m.first] ^ m.second;
+                    map[i][j] ^= orig ^ m.second;
                 }
                 
                 if (!__builtin_parity(map[i][j])) max_len = max(max_len, j-i+1);
