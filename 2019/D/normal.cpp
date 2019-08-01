@@ -7,45 +7,78 @@
 
 using namespace std;
 
-struct Guest {
-    int pos;
-    bool clockwise;
-};
+inline int mod(int x, int m) {
+    // return range [0, m-1]
+    return (m + (x%m)) % m;
+}
 
-vector<int> solve(int N, int G, int M, vector<Guest>& guests) {
-    vector<pair<int, vector<int>>> mem (N);
-    vector<int> res (G, 1);
+int getNext(vector<vector<int>>& poles, int N, int ptr, int direction = 1) {
+    int p = mod(ptr+direction, N);
     
-    for (int i = 0; i < G; ++i) {
-        auto g = guests[i];
-        --g.pos;
-        mem[g.pos].first = 0;
-        mem[g.pos].second.push_back(i);
+    while (poles[p].empty()) {
+        if (p == ptr) return -1;
+        p = mod(p+direction, N);
     }
     
-    for (int t = 1; t <= M; ++t) {
-        for (int i = 0; i < G; ++i) {
-            auto& g = guests[i];
+    return p;
+}
 
-            if (g.clockwise) {
-                g.pos = (g.pos + 1) % N;
-            } else {
-                g.pos = (g.pos + N - 1) % N;
+vector<int> solve(int N, int G, int M, vector<vector<int>>& cpoles, vector<vector<int>>& apoles, int c_count, int a_count) {
+    bool period = false;
+    if (M >= N) {
+        M %= N;
+        period = true;
+    }
+    
+    vector<int> result (G);
+    vector<int> last_seen (N, INT_MAX);
+    vector<int> orig (N, -1);
+    if (c_count) {
+        int next = getNext(cpoles, N, N-M-1, 1);
+        for (int i = 0; i < N; ++i) {
+            int d = mod(i-next, N);
+            
+            if (d <= M || period) {
+                last_seen[i] = mod(M-d, N);
+                orig[i] = next;
             }
             
-            if (mem[g.pos].first < t) {
-                for (auto& v : mem[g.pos].second) {
-                    --res[v];
-                }
-                mem[g.pos].second.clear();
-                mem[g.pos].first = t;
-            }
-            ++res[i];
-            mem[g.pos].second.push_back(i);
+            if (d == M) next = getNext(cpoles, N, next, 1);
         }
     }
     
-    return res;
+    if (a_count) {
+        int next = getNext(apoles, N, M, -1);
+        for (int i = N-1; i >= 0; --i) {
+            int d = mod(next-i, N);
+            
+            if (d <= M || period) {
+                int t = mod(M-d, N);
+                if (t < last_seen[i]) {
+                    for (auto& v : apoles[next]) ++result[v];
+                } else if (t == last_seen[i]) {
+                    for (auto& v : apoles[next]) ++result[v];
+                    for (auto& v : cpoles[orig[i]]) ++result[v];
+                } else {
+                    for (auto& v : cpoles[orig[i]]) ++result[v];
+                }
+            } else {
+                if (orig[i] != -1) {
+                    for (auto& v : cpoles[orig[i]]) ++result[v];
+                }
+            }
+            
+            if (d == M) next = getNext(apoles, N, next, -1);
+        }
+    } else {
+        // update result
+        for (int i = 0; i < N; ++i) {
+            if (orig[i] == -1) continue;
+            for (auto& v : cpoles[orig[i]]) ++result[v];
+        }
+    }
+    
+    return result;
 }
 
 int main() {
@@ -56,17 +89,25 @@ int main() {
         int N, G, M;
         cin >> N >> G >> M;
         
-        vector<Guest> guests (G);
-        for (auto& g : guests) {
+        vector<vector<int>> cpoles (N), apoles (N);
+        int c_count = 0, a_count = 0;
+        for (int j = 0; j < G; ++j) {
+            int pos;
             char c;
-            cin >> g.pos >> c;
+            cin >> pos >> c;
+            --pos;
             
-            if (c == 'C') g.clockwise = true;
-            else g.clockwise = false;
+            if (c == 'C') {
+                cpoles[pos].push_back(j);
+                ++c_count;
+            } else {
+                apoles[pos].push_back(j);
+                ++a_count;
+            }
         }
         
         cout << "Case #" << i << ": ";
-        for (auto& v : solve(N, G, M, guests)) {
+        for (auto& v : solve(N, G, M, cpoles, apoles, c_count, a_count)) {
             cout << v << ' ';
         }
         cout << endl;
