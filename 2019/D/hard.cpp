@@ -6,16 +6,16 @@
 #include <climits>
 #include <cmath>
 
-typedef long long ull;
+typedef long long sll;
 using namespace std;
 
 struct Spot {
     int index;
-    ull pos;
-    ull cost;
+    sll pos;
+    sll cost;
 };
 
-void heapify(vector<ull>& arr, int N, int p) {
+void heapify(vector<sll>& arr, int N, int p) {
     int largest = p;
 
     int left = (p<<1) + 1;
@@ -34,7 +34,7 @@ void heapify(vector<ull>& arr, int N, int p) {
     }
 }
 
-ull solve(int K, int N, vector<Spot>& spots) {
+sll solve(int K, int N, vector<Spot>& spots) {
     sort(spots.begin(), spots.end(), [](const Spot& a, const Spot& b) {
         return a.pos < b.pos;
     });
@@ -42,13 +42,13 @@ ull solve(int K, int N, vector<Spot>& spots) {
     int left_K = K >> 1;
     int right_K = K - left_K;
 
-    vector<ull> left_cost (N), right_cost (N);     // warehouse pos: [left_K, N-right_K)
+    vector<sll> left_cost (N), right_cost (N);     // warehouse pos: [left_K, N-right_K)
 
     // make left heap
     // init warehouse pos
     int wi = left_K;
-    vector<ull> max_cost_heap (left_K);
-    ull bias = 0;
+    vector<sll> max_cost_heap (left_K);
+    sll bias = 0;
 
     if (left_K == 0) goto right;
 
@@ -60,10 +60,10 @@ ull solve(int K, int N, vector<Spot>& spots) {
 
     // move warehouse
     while (++wi < N-right_K) {
-        ull new_cost = spots[wi-1].cost;
-        ull max = max_cost_heap.front();
+        sll new_cost = spots[wi-1].cost;
+        sll max = max_cost_heap.front();
 
-        ull delta_x = spots[wi].pos - spots[wi-1].pos;
+        sll delta_x = spots[wi].pos - spots[wi-1].pos;
         left_cost[wi] = left_cost[wi-1] + left_K * delta_x;
 
         if (new_cost < max + bias) {
@@ -88,10 +88,10 @@ right:
 
     // move warehouse
     while (--wi >= left_K) {
-        ull new_cost = spots[wi+1].cost;
-        ull max = max_cost_heap.front();
+        sll new_cost = spots[wi+1].cost;
+        sll max = max_cost_heap.front();
 
-        ull delta_x = spots[wi+1].pos - spots[wi].pos;
+        sll delta_x = spots[wi+1].pos - spots[wi].pos;
         right_cost[wi] = right_cost[wi+1] + right_K * delta_x;
 
         if (new_cost < max + bias) {
@@ -103,43 +103,13 @@ right:
         bias += delta_x;
     }
 
-    ull min_cost = LLONG_MAX;
+    sll min_cost = LLONG_MAX;
     for (int i = left_K; i < N-right_K; ++i) {
         min_cost = min(min_cost, left_cost[i] + right_cost[i] + spots[i].cost);
     }
 
     return min_cost;
 }
-
-// ull solveVisible(int K, int N, vector<ull>& dis, vector<ull>& costs) {
-
-//     ull res = ULLONG_MAX;
-
-//     for (int i = 0; i < N; ++i) {
-//         // try all possible pos for the warehouse
-//         ull c = costs[i];
-//         ull d = dis[i];
-
-//         vector<ull> new_costs = costs;
-//         for (int j = 0; j < N; ++j) {
-//             if (i == j) {
-//                 new_costs[j] = 0;
-//             } else {
-//                 new_costs[j] += dis[j] > d ? dis[j] - d : d - dis[j];
-//             }
-//         }
-
-//         sort(new_costs.begin(), new_costs.end());
-
-//         for (int j = 1; j <= K; ++j) {
-//             c += new_costs[j];
-//         }
-
-//         res = min(c, res);
-//     }
-
-//     return res;
-// }
 
 
 int main() {
